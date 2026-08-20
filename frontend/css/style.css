@@ -1,0 +1,67 @@
+* { box-sizing: border-box; }
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    background: #f4f6f8;
+    color: #1a1a1a;
+}
+nav {
+    background: #002a5c; /* HSBC-ish navy, swap freely */
+    padding: 14px 24px;
+    display: flex;
+    gap: 20px;
+}
+nav a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+}
+nav a:hover { text-decoration: underline; }
+main {
+    max-width: 900px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+h1 { font-size: 22px; }
+input, select, button {
+    font-size: 15px;
+    padding: 8px 10px;
+    margin: 4px 0;
+}
+button {
+    background: #002a5c;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover { background: #003f80; }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    margin-top: 12px;
+}
+th, td {
+    text-align: left;
+    padding: 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+th { background: #eef2f6; }
+.positive { color: #0a7a2e; font-weight: bold; }
+.negative { color: #b3261e; font-weight: bold; }
+.card {
+    background: #fff;
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.search-result {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+.search-result:hover { background: #f0f4f8; }
+.error { color: #b3261e; margin-top: 8px; }
+canvas { max-width: 100%; }

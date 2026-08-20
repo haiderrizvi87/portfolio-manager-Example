@@ -1,0 +1,42 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.hsbc'
+version = '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.mysql:mysql-connector-j:8.4.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
+
+    testImplementation platform('org.junit:junit-bom:5.10.2')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+application {
+    mainClass = 'com.simplywealth.portfolio.Main'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Convenience task to run the manual integration test (src/test - no JUnit annotations,
+// just a runnable main() method students can read and execute directly).
+// Usage: ./gradlew runVerification
+task runVerification(type: JavaExec) {
+    group = 'verification'
+    description = 'Runs ManualIntegrationTest against fake in-memory data (no MySQL/Yahoo needed)'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.simplywealth.portfolio.verify.ManualIntegrationTest'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}

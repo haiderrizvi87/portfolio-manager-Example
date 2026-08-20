@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Portfolio Manager - Search</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <a href="index.html">Search</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="summary.html">Performance Summary</a>
+    </nav>
+    <main>
+        <h1>Find an Asset</h1>
+        <div class="card">
+            <input type="text" id="searchInput" placeholder="Search ticker or name (e.g. NVDA, Bitcoin)" style="width: 70%;">
+            <button onclick="doSearch()">Search</button>
+            <p id="searchError" class="error"></p>
+        </div>
+        <div id="results" class="card" style="display:none;"></div>
+    </main>
+    <script src="js/api.js"></script>
+    <script src="js/search.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Portfolio Manager - Portfolio</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav>
+        <a href="index.html">Search</a>
+        <a href="portfolio.html">Portfolio</a>
+        <a href="summary.html">Performance Summary</a>
+    </nav>
+    <main>
+        <h1>My Portfolio</h1>
+        <p id="loadError" class="error"></p>
+        <table id="holdingsTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Ticker</th><th>Type</th><th>Qty</th><th>Avg Price Paid</th>
+                    <th>Current Price</th><th>Current Value</th><th>P/L</th><th></th>
+                </tr>
+            </thead>
+            <tbody id="holdingsBody"></tbody>
+        </table>
+    </main>
+    <script src="js/api.js"></script>
+    <script src="js/portfolio.js"></script>
+</body>
+</html>
