@@ -1,138 +1,157 @@
-# Portfolio Manager - Working Skeleton
+# Team Setup Guide
 
-Backend: plain Java (JDK `HttpServer`, no framework) · Build: Gradle (Groovy DSL) · DB: MySQL (raw JDBC) · JSON: Gson
-Frontend: plain HTML/CSS/JS (no UI framework - no React/Vue/Angular), charts via Chart.js (loaded locally, see `frontend/js/vendor/`)
+Follow this once, in order, before touching the code. Each teammate does this on their own
+machine — this project uses a separate local database per person (see "Why everyone needs
+their own MySQL" at the bottom), so there's no shared server to configure.
 
-This matches the requirements spec (`portfolio_manager_spec.md`) - see that document for the full
-functional/non-functional requirements and design rationale behind every decision here.
+---
 
-Built and structured to be **studied**, not just run - see "How to study this codebase" below.
+## 1. Install prerequisites
 
-## ⚠️ Before you rely on this
+| Tool | Version | Check if already installed |
+|---|---|---|
+| JDK | 17 or newer | `java -version` |
+| MySQL Community Server | see Step 2 below | `mysql --version` (if on PATH) |
+| IntelliJ IDEA | any recent version | — |
 
-This was built without access to a live MySQL server or Yahoo's real endpoints. What HAS been
-verified:
-- The full project **compiles cleanly** against the real Gson library (compiled from source and
-  checked, not just a stub).
-- A full CRUD cycle, input validation, and the exact profit/loss calculation from spec Section 3.3
-  were run **end-to-end** with a real `HttpServer`, real HTTP requests, and real JSON serialization
-  - just with fake in-memory data standing in for MySQL and Yahoo. See `runVerification` below.
+If JDK is missing or older than 17, install it before continuing — Gradle will fail otherwise.
 
-What has NOT been verified, because it can't be from outside a real environment:
-1. The actual MySQL connection and schema (get this running first)
-2. Whether Yahoo's real endpoints still behave as expected (they're unofficial - NFR3 in the spec)
+---
 
-## Setup
+## 2. Install MySQL — matching the version the project was built against
 
-### 1. MySQL
-```
-mysql -u root -p < src/main/resources/schema.sql
-```
-Then edit `src/main/java/com/simplywealth/portfolio/config/DatabaseConfig.java` with your actual
-username/password if they differ from the defaults (`root` / `password`).
+To avoid "works on my machine" issues, install the **same MySQL version** as the rest of the
+team, not just whatever's newest.
 
-### 2. Backend (IntelliJ)
-- Open the `portfolio-manager` folder as a Gradle project (File > Open) - IntelliJ will resolve
-  `mysql-connector-j` and `gson` from Maven Central automatically via `build.gradle`.
-- Run `Main.java` (or `./gradlew run` once IntelliJ generates the wrapper).
-- Server starts on `http://localhost:8080`.
+**Version currently in use by the team:** `________________`
+*(whoever set this up first: run `mysql --version` and fill this in before sharing this file)*
 
-### 3. Verify the logic without MySQL or Yahoo (recommended first step)
-```
-./gradlew runVerification
-```
-Runs `src/test/java/.../ManualIntegrationTest.java` - a plain `main()` method (no JUnit, no
-framework) that starts a real `HttpServer` wired to fake in-memory data, fires real HTTP requests
-at it, and checks the responses. This proves the routing and calculation logic works *before* you
-spend time debugging a MySQL connection string.
+### Option A — quick install via winget (Windows Package Manager, built into Windows 10/11)
 
-### 4. Frontend
-The `frontend/` folder is plain static HTML/CSS/JS - no build step. Options:
-- Open `frontend/index.html` directly in a browser, or
-- Serve it with any static server, e.g. `python3 -m http.server 5500` from inside `frontend/`, or
-  IntelliJ's built-in "open in browser" on the HTML file.
-
-`frontend/js/api.js` has `API_BASE = "http://localhost:8080"` - change this if your backend runs
-elsewhere. CORS is already handled on the backend (`HttpUtil.addCorsHeaders`).
-
-## Project structure (18 main files - deliberately minimal)
-
-```
-src/main/java/com/hsbc/portfolio/
-  Main.java                    entry point: wires everything together, starts the server
-  config/DatabaseConfig.java   JDBC connection details
-  model/                       Asset, Holding - mirror the two DB tables exactly
-  dao/                         AssetDao, HoldingDao - raw JDBC, one class per table
-  service/
-    AssetService.java          "get or create" an Asset row
-    HoldingService.java        record / list / delete holdings
-    PortfolioService.java      the profit/loss MATH (spec Section 3) - no I/O of its own
-    YahooFinanceService.java   all Yahoo Finance HTTP calls + simple cache, in one place
-  dto/                         shapes of data sent over the API (separate from the DB model)
-  http/
-    HttpUtil.java, JsonUtil.java     shared request/response/JSON helpers
-    handlers/AssetsHandler.java      everything under /assets/
-    handlers/HoldingsHandler.java    everything under /holdings and /holdings/
-
-src/test/java/com/hsbc/portfolio/verify/
-  ManualIntegrationTest.java   runnable, readable end-to-end check (see Setup step 3)
+```powershell
+winget install Oracle.MySQL
 ```
 
-Only **two** handler classes, each owning one REST resource and dispatching internally on
-method + path - not one class per endpoint. This mirrors how a single Servlet or Controller
-class conventionally owns one resource in larger frameworks; here it's done with a plain
-`if/else` chain so the mechanics are visible rather than hidden behind annotations.
+This installs a recent 8.0.x release. Fine for this project, since nothing here depends on a
+specific patch version — just close enough to "8.0.x" for everyone.
 
-## How to study this codebase
+### Option B — exact version match (if you want it byte-identical)
 
-**To understand a request end-to-end**, pick one and trace it top to bottom:
-- *Simplest*: `GET /holdings` - `Main.java` (routing) -> `HoldingsHandler.handleList()` ->
-  `PortfolioService.getAggregatedPortfolio()` -> `HoldingDao.findAll()` (SQL) -> back up through
-  the DTO -> `HttpUtil.sendJson()` (JSON out).
-- *Most complete*: `POST /holdings` - same path, but also touches `AssetService` (get-or-create),
-  `YahooFinanceService` (price lookup), and several `if` validation checks before anything is
-  written to the database. This is the best single method to read if you only read one.
+1. Go to [dev.mysql.com/downloads/mysql](https://dev.mysql.com/downloads/mysql/)
+2. Click **"Looking for previous GA versions?"** near the bottom
+3. Select the exact version number from the table above
+4. Download the Windows installer and run it — choose the standard/default setup
+5. **Set a root password when prompted — write it down, you'll need it in Step 5**
 
-**To understand REST status codes properly**, read `HoldingsHandler.handle()` and
-`AssetsHandler.handle()` - both work out *which resource* a path refers to before checking
-*which method* was used. That ordering is what makes `404 Not Found` (wrong path) and
-`405 Method Not Allowed` (right path, wrong verb) come out correct. Then run
-`ManualIntegrationTest` and look at Tests 10-12, which check exactly this.
+### Verify the install
 
-**To understand CRUD without any ORM**, compare `AssetDao.java` and `HoldingDao.java` side by
-side - every method is `PreparedStatement` in, `ResultSet` out, by hand. No annotations, no
-magic. This is what Hibernate/JPA do for you automatically in a framework - seeing it written
-out once is the point of building it this way.
+```powershell
+& "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" --version
+```
 
-**To understand testing without a mocking framework**, read the bottom of
-`ManualIntegrationTest.java` - `FakeAssetDao`, `FakeHoldingDao`, and `FakeYahooFinanceService`
-all just `extends` the real class and override its methods. No interface, no Mockito, no
-framework - plain Java inheritance is enough, because none of the real classes or their methods
-are marked `final`.
+If `mysql` isn't recognized directly in PowerShell (common — it's not always added to PATH
+automatically), use the full path above, or add
+`C:\Program Files\MySQL\MySQL Server 8.0\bin` to your system PATH via
+**Environment Variables → Path → Edit → New**, then restart your terminal.
 
-## Code style
+---
 
-Matches the "no lambdas, simple syntax" rule confirmed for this cohort (consistent with the
-Transaction Manager project convention):
-- **No lambda expressions or arrow functions anywhere** - Java and frontend JS both use plain
-  `if/else`, traditional `for` loops, and named classes/functions throughout. `Main.java`'s
-  routing uses named handler classes (`AssetsHandler`, `HoldingsHandler`), not inline lambdas.
-- **No switch expressions** (`switch (x) { case y -> ... }`) and **no ternaries** - both replaced
-  with plain `if/else` for consistency. A traditional `switch (x) { case y: return z; }` statement
-  is still used where natural (`YahooFinanceService.mapAssetType`), since that's classic syntax,
-  not an expression.
-- **DAO, not Repository** naming - `AssetDao`/`HoldingDao` in the `dao` package, matching the
-  Transaction Manager project's `AccountDao`/`TransactionDao` convention.
-- `Optional` is used for "might not exist" lookups (`findById`, `findByTicker`), checked with
-  `.isPresent()`/`.get()` rather than `.orElseThrow(() -> ...)`, to avoid lambdas.
+## 3. Clone the repository
 
-## Known gaps / things to finish as a team
+In IntelliJ: **Git → Clone...** (or **VCS → Get from Version Control**), paste the repo URL.
 
-- **Split-adjustment (NFR5) not yet verified** - confirm Yahoo's `v8/finance/chart` endpoint
-  returns split-adjusted closes before trusting any P/L numbers in a demo.
-- **`getCurrentPrice()` isn't cached** (unlike `getPriceOnDate()`, which is) - every portfolio
-  view re-fetches live from Yahoo. Fine at demo scale; worth discussing as a stretch goal.
-- **No update/edit endpoint** - deliberately out of scope (spec Section 5): delete and re-add only.
-- **`ManualIntegrationTest` checks logic, not your real MySQL/Yahoo setup** - run it first to
-  confirm the code works, then still test manually against your real database and network calls
-  before a demo.
+Or via terminal:
+```powershell
+git clone <repo-url>
+```
+
+**Watch out for nested folders** — if you end up with `portfolio-manager\portfolio-manager\...`,
+open the **inner** folder in IntelliJ (the one directly containing `build.gradle`), not the outer
+wrapper.
+
+---
+
+## 4. Open in IntelliJ and let Gradle sync
+
+**File → Open** → select the project folder (the one with `build.gradle` in it).
+
+IntelliJ should detect it as a Gradle project automatically and start syncing — this needs
+internet access the first time, to download `mysql-connector-j` and `gson` from Maven Central.
+
+Check **File → Project Structure → Project → SDK** is set to Java 17+.
+
+---
+
+## 5. Set your own MySQL password in the code
+
+Open `src/main/java/com/simplywealth/portfolio/config/DatabaseConfig.java` and change:
+
+```java
+private static final String PASSWORD = "CHANGE_ME";
+```
+
+to whatever **your own** MySQL root password is (the one you set in Step 2).
+**Never commit your real password back to the repo** — leave a placeholder like `CHANGE_ME`
+in place before pushing anything.
+
+---
+
+## 6. Run it — database and tables create themselves automatically
+
+Right-click `Main.java` → **Run 'Main.main()'**.
+
+You should see:
+```
+Portfolio Manager backend running on http://localhost:8080
+```
+
+The app automatically creates the `portfolio_manager` database and both tables the first time
+it runs, if they don't already exist — no manual SQL commands needed.
+
+*(If this throws a `SQLException`, it's almost always the password in Step 5 not matching your
+actual MySQL root password.)*
+
+---
+
+## 7. Open the frontend
+
+Right-click `frontend/index.html` in the project tree → **Open in Browser**.
+
+**Do not visit `localhost:8080` directly in your browser** — that's the backend API only, with
+no homepage. You'll get a `404 Not Found`, which is expected. The actual app is the HTML file.
+
+---
+
+## 8. Optional: verify everything works without touching MySQL at all
+
+```powershell
+.\gradlew.bat runVerification
+```
+(If `gradlew` isn't recognized, generate it via IntelliJ's Gradle panel first:
+**Tasks → build → wrapper**.)
+
+Expect: `===== RESULTS: 22 passed, 0 failed =====`. This runs against fake in-memory data, so
+it's a good first check that your Gradle/JDK setup itself is working before debugging anything
+database-related.
+
+---
+
+## Why everyone needs their own MySQL
+
+This project is built as single-user, no-authentication (see the spec, NFR1) — each person's
+`DatabaseConfig.java` connects to `localhost:3306` on their **own** machine. Nobody's holdings,
+searches, or recorded investments will appear on anyone else's machine, and that's expected, not
+a bug — you're each running a fully independent copy of the app.
+
+## Common gotchas we hit setting this up
+
+- **PowerShell doesn't support `mysql < file.sql`** — the `<` redirect operator isn't
+  implemented in PowerShell. Use `Get-Content file.sql | mysql -u root -p` instead.
+- **`gradle`/`gradlew` "not recognized"** — use IntelliJ's Gradle tool window (right-hand
+  panel) instead of the terminal, or generate the wrapper first via
+  **Gradle panel → Tasks → build → wrapper**.
+- **IntelliJ's Database tool window shows "No data sources"** — that's a separate, optional
+  GUI feature and doesn't connect itself automatically. Set it up via
+  **Create data source → MySQL**, entering the same host/port/database/credentials as
+  `DatabaseConfig.java`, if you want to browse tables visually.
+
